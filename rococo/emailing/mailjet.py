@@ -78,7 +78,15 @@ class MailjetService(EmailService):
         if match:
             name, email = match.groups()
         else:
-            name, email = '', self.config.SOURCE_EMAIL.strip()
+            name = ''
+            email = self.config.SOURCE_EMAIL.strip()
+            # Validate the fallback looks like a plain email address — reject
+            # values that smuggle in angle brackets or are missing the '@'.
+            if '@' not in email or '<' in email or '>' in email:
+                raise ValueError(
+                    f"Invalid SOURCE_EMAIL: {self.config.SOURCE_EMAIL!r}. "
+                    'Expected "user@example.com" or "Name <user@example.com>".'
+                )
         self.from_address = {"Name": name, "Email": email}
 
         self.client = Client(
